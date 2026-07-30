@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# runtime state / secrets — never tracked
+config/alerting.json
+config/secrets.json
+config/maintenance.json
+config/alert_overrides.json
+data/

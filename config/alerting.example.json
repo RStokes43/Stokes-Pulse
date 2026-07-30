@@ -1,0 +1,12 @@
+{
+  "_comment": "Copy to config/alerting.json (gitignored) or just configure via the Settings tab in the UI.",
+  "smtp_host": "",
+  "smtp_port": 587,
+  "smtp_security": "starttls",
+  "smtp_user": "",
+  "smtp_password": "",
+  "smtp_from": "",
+  "recipients": [],
+  "send_recovery_emails": true,
+  "heartbeat_url": ""
+}

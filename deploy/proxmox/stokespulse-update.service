@@ -1,0 +1,9 @@
+[Unit]
+Description=Stokes-Pulse auto-update (git pull, restart on change)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=__APP_DIR__
+ExecStart=/usr/bin/env bash __APP_DIR__/deploy/proxmox/update.sh
