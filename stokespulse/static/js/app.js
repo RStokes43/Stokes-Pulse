@@ -70,7 +70,7 @@ const StokesPulse = (function () {
         console.error("[sidebar]", e)
       );
     runSidebar();
-    mod._sidebarTimer = setInterval(runSidebar, mod.refreshMs || 15000);
+    mod._sidebarTimer = setInterval(runSidebar, mod.refreshMs || 3000);
   }
 
   function openModal(id) { qs(`#${id}`).hidden = false; }
@@ -189,7 +189,7 @@ const StokesPulse = (function () {
     wireNav();
     loadMeta();
     refreshHeader();
-    setInterval(refreshHeader, 15000);
+    setInterval(refreshHeader, 3000);
     showTab("dashboard");
   }
 

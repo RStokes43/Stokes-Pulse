@@ -101,5 +101,5 @@
   });
 
   refreshCurrent();
-  setInterval(refreshCurrent, 15000);
+  setInterval(refreshCurrent, 3000);
 })();

@@ -188,12 +188,66 @@ def get_events(limit=200, device_id=None):
         conn.close()
 
 
-def get_recent_history(device_id, since_ts):
+def get_uptime_counts(device_id, since_ts):
+    """(total, up_count) via a SQL aggregate — avoids pulling every row just
+    to count them, which matters once cycles are seconds instead of minutes."""
+    conn = get_conn()
+    try:
+        row = conn.execute(
+            "SELECT COUNT(*) AS total, "
+            "SUM(CASE WHEN status != 'down' THEN 1 ELSE 0 END) AS up_count "
+            "FROM probe_history WHERE device_id = ? AND ts >= ?",
+            (device_id, since_ts),
+        ).fetchone()
+        return row["total"], row["up_count"] or 0
+    finally:
+        conn.close()
+
+
+def get_recent_points(device_id, limit=30):
+    """Latest N probes (for the dashboard sparkline + current latency/ports),
+    via an indexed ORDER BY ... LIMIT instead of scanning the whole window."""
     conn = get_conn()
     try:
         rows = conn.execute(
-            "SELECT * FROM probe_history WHERE device_id = ? AND ts >= ? ORDER BY ts ASC",
+            "SELECT * FROM probe_history WHERE device_id = ? ORDER BY ts DESC LIMIT ?",
+            (device_id, limit),
+        ).fetchall()
+        return [dict(r) for r in reversed(rows)]
+    finally:
+        conn.close()
+
+
+def get_latency_values(device_id, since_ts):
+    """Latency column only (no device_id/ports/status payload) for avg/p95 math."""
+    conn = get_conn()
+    try:
+        rows = conn.execute(
+            "SELECT latency_ms FROM probe_history "
+            "WHERE device_id = ? AND ts >= ? AND latency_ms IS NOT NULL",
             (device_id, since_ts),
+        ).fetchall()
+        return [r["latency_ms"] for r in rows]
+    finally:
+        conn.close()
+
+
+def get_series(device_id, since_ts, max_points=600):
+    """ts/latency/status for the Analytics chart, downsampled to at most
+    max_points so a 30-day range at a fast probe cycle doesn't try to hand
+    the browser hundreds of thousands of rows to plot."""
+    conn = get_conn()
+    try:
+        total = conn.execute(
+            "SELECT COUNT(*) AS n FROM probe_history WHERE device_id = ? AND ts >= ?",
+            (device_id, since_ts),
+        ).fetchone()["n"]
+        stride = max(1, total // max_points)
+        rows = conn.execute(
+            "SELECT ts, latency_ms, status FROM probe_history "
+            "WHERE device_id = ? AND ts >= ? AND (id % ?) = 0 "
+            "ORDER BY ts ASC",
+            (device_id, since_ts, stride),
         ).fetchall()
         return [dict(r) for r in rows]
     finally:

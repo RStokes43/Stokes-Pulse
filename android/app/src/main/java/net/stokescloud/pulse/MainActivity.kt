@@ -92,6 +92,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        // The dashboard polls every 3s now — stop those JS timers while
+        // backgrounded instead of burning battery/data for no visible benefit.
+        webView.pauseTimers()
         CookieManager.getInstance().flush()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        webView.resumeTimers()
     }
 }

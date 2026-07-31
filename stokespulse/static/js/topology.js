@@ -237,7 +237,7 @@
   }
 
   const TopologyTab = {
-    refreshMs: 15000,
+    refreshMs: 3000,
     root: null,
     async render(root) {
       this.root = root;

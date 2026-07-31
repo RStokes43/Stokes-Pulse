@@ -7,10 +7,16 @@ import time
 
 from . import db, config
 
-CYCLE_SECONDS = 45
-DOWN_AFTER_CYCLES = 2
-PING_TIMEOUT_S = 1.5
-TCP_TIMEOUT_S = 2.0
+CYCLE_SECONDS = 3
+# Debounce is defined in wall-clock time (~90s), not a fixed cycle count, so
+# it stays meaningful as CYCLE_SECONDS changes: 90 / 3 = 30 consecutive cycles.
+DOWN_AFTER_CYCLES = round(90 / CYCLE_SECONDS)
+# Tightened from 1.5s/2.0s: at a 3s cycle budget, a single unreachable device
+# with several ports could otherwise cost 1.5 + N*2.0s all by itself — more
+# than the entire cycle. LAN RTT is ~1ms and even WAN/VPN checks here see
+# well under 100ms, so these still leave generous margin for real replies.
+PING_TIMEOUT_S = 0.5
+TCP_TIMEOUT_S = 0.8
 
 _PING_TIME_RE = re.compile(r"time[=<]([\d.]+)\s*ms", re.IGNORECASE)
 

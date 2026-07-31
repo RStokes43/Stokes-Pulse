@@ -8,11 +8,10 @@ GROUP_ORDER = ["Internet", "VPN", "Firewall", "Network", "Storage", "Hosts", "VM
 RANGE_HOURS = {"24h": 24, "7d": 24 * 7, "30d": 24 * 30}
 
 
-def _uptime_pct(history):
-    if not history:
+def _uptime_pct_from_counts(total, up_count):
+    if not total:
         return None
-    up_count = sum(1 for h in history if h["status"] != "down")
-    return round(100.0 * up_count / len(history), 2)
+    return round(100.0 * up_count / total, 2)
 
 
 def _percentile(values, pct):
@@ -30,16 +29,17 @@ def _percentile(values, pct):
 def device_status_snapshot(device):
     state = db.get_device_state(device["id"]) or {"status": "up"}
     since = int(time.time()) - 24 * 3600
-    history = db.get_recent_history(device["id"], since)
-    latest = history[-1] if history else None
+    total, up_count = db.get_uptime_counts(device["id"], since)
+    recent = db.get_recent_points(device["id"], limit=30)
+    latest = recent[-1] if recent else None
     return {
         **device,
         "status": state["status"],
         "latency_ms": latest["latency_ms"] if latest else None,
         "ports_open": json.loads(latest["ports_open"]) if latest else [],
         "ports_closed": json.loads(latest["ports_closed"]) if latest else [],
-        "uptime_24h_pct": _uptime_pct(history),
-        "sparkline": [h["latency_ms"] for h in history[-30:]],
+        "uptime_24h_pct": _uptime_pct_from_counts(total, up_count),
+        "sparkline": [h["latency_ms"] for h in recent],
         "muted": config.is_muted(device["id"]),
     }
 
@@ -49,8 +49,8 @@ def all_device_snapshots():
 
 def device_analytics_summary(device, hours):
     since = int(time.time()) - hours * 3600
-    history = db.get_recent_history(device["id"], since)
-    latencies = [h["latency_ms"] for h in history if h["latency_ms"] is not None]
+    total, up_count = db.get_uptime_counts(device["id"], since)
+    latencies = db.get_latency_values(device["id"], since)
     events = db.get_events(limit=2000, device_id=device["id"])
     incidents = [e for e in events if e["event_type"] == "down" and e["started_at"] >= since]
     durations = [e["duration_s"] for e in incidents if e["duration_s"] is not None]
@@ -58,7 +58,7 @@ def device_analytics_summary(device, hours):
         "device_id": device["id"],
         "name": device["name"],
         "category": device["category"],
-        "uptime_pct": _uptime_pct(history),
+        "uptime_pct": _uptime_pct_from_counts(total, up_count),
         "avg_latency_ms": round(statistics.mean(latencies), 1) if latencies else None,
         "p95_latency_ms": round(_percentile(latencies, 95), 1) if latencies else None,
         "incidents_count": len(incidents),
@@ -81,8 +81,7 @@ def analytics_overview(range_key):
 def device_series(device_id, range_key):
     hours = RANGE_HOURS.get(range_key, 24)
     since = int(time.time()) - hours * 3600
-    history = db.get_recent_history(device_id, since)
-    return [{"ts": h["ts"], "latency_ms": h["latency_ms"], "status": h["status"]} for h in history]
+    return db.get_series(device_id, since)
 
 
 def impact_view():
