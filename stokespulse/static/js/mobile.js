@@ -53,20 +53,41 @@
   const PAUSE_ICON = '<svg viewBox="0 0 16 16" width="14" height="14"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"></rect><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"></rect></svg>';
   const PLAY_ICON = '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M4 2.5 L13.5 8 L4 13.5 Z" fill="currentColor"></path></svg>';
 
+  function mobileSparklineSvg(values) {
+    const pts = [];
+    const known = (values || []).filter((v) => v != null);
+    if (known.length < 2) return "";
+    const max = Math.max(...known);
+    const min = Math.min(...known);
+    const range = max - min || 1;
+    const step = 100 / (values.length - 1 || 1);
+    values.forEach((v, i) => {
+      if (v == null) return;
+      const x = i * step;
+      const y = 15 - ((v - min) / range) * 13;
+      pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    });
+    return `<svg class="m-sparkline" viewBox="0 0 100 16" preserveAspectRatio="none"><path d="M${pts.join(" L")}"></path></svg>`;
+  }
+
   function dashboardCardHtml(d) {
     const latency = d.latency_ms == null ? "—" : `${Math.round(d.latency_ms)} ms`;
     const uptime = d.uptime_24h_pct == null ? "—" : `${d.uptime_24h_pct}%`;
+    const spark = mobileSparklineSvg(d.sparkline);
     return `<div class="m-card status-${d.status}">
-      <span class="dot status-${d.status}"></span>
-      <div class="info">
-        <div class="name">${escapeHtml(d.name)}</div>
-        <div class="ip">${escapeHtml(d.ip)}</div>
+      <div class="m-card-row">
+        <span class="dot status-${d.status}"></span>
+        <div class="info">
+          <div class="name">${escapeHtml(d.name)}</div>
+          <div class="ip">${escapeHtml(d.ip)}</div>
+        </div>
+        <div class="metrics">
+          <span class="latency">${latency}</span>
+          <span>${uptime}</span>
+        </div>
+        <button class="pause-btn ${d.muted ? "paused" : ""}" data-id="${d.id}" data-muted="${d.muted}" title="${d.muted ? "Resume alerts" : "Pause alerts"}">${d.muted ? PLAY_ICON : PAUSE_ICON}</button>
       </div>
-      <div class="metrics">
-        <span class="latency">${latency}</span>
-        <span>${uptime}</span>
-      </div>
-      <button class="pause-btn ${d.muted ? "paused" : ""}" data-id="${d.id}" data-muted="${d.muted}" title="${d.muted ? "Resume alerts" : "Pause alerts"}">${d.muted ? PLAY_ICON : PAUSE_ICON}</button>
+      ${spark}
     </div>`;
   }
 
@@ -90,12 +111,15 @@
       .join("");
 
     root.innerHTML = `
-      <div class="m-hero">
+      <div class="m-hero" id="m-hero" title="View analytics">
         <div class="status-word ${worst}">${statusWord}</div>
         <div class="status-sub">${counts.up || 0}/${devices.length} up · ${now}</div>
       </div>
       ${groupsHtml || '<div class="m-empty">No devices configured.</div>'}
     `;
+
+    const heroEl = qs("#m-hero", root);
+    if (heroEl) heroEl.addEventListener("click", () => showSection("analytics"));
 
     qsa(".pause-btn", root).forEach((btn) =>
       btn.addEventListener("click", async (e) => {
@@ -731,9 +755,38 @@
   function openModal(id) { qs(`#${id}`).hidden = false; }
   function closeModal(id) { qs(`#${id}`).hidden = true; }
 
+  function wireEdgeSwipe() {
+    const EDGE_PX = 24;
+    const SWIPE_PX = 60;
+    const MAX_VERTICAL_PX = 60;
+    const MAX_MS = 600;
+    let startX = 0, startY = 0, startT = 0;
+
+    document.addEventListener("touchstart", (e) => {
+      const t = e.touches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+      startT = Date.now();
+    }, { passive: true });
+
+    document.addEventListener("touchend", (e) => {
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      if (Date.now() - startT > MAX_MS || Math.abs(dy) > MAX_VERTICAL_PX) return;
+      const drawerOpen = !qs("#m-drawer").hidden;
+      if (!drawerOpen && startX <= EDGE_PX && dx > SWIPE_PX) {
+        openDrawer();
+      } else if (drawerOpen && dx < -SWIPE_PX) {
+        closeDrawer();
+      }
+    }, { passive: true });
+  }
+
   function wireChrome() {
     qs("#drawer-btn").addEventListener("click", openDrawer);
     qs("#drawer-backdrop").addEventListener("click", closeDrawer);
+    wireEdgeSwipe();
     qsa(".m-drawer-item[data-section]").forEach((btn) =>
       btn.addEventListener("click", () => showSection(btn.dataset.section))
     );
