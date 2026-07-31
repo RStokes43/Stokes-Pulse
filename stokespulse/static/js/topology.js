@@ -1,5 +1,5 @@
 (function () {
-  const TILE_W = 172;
+  const TILE_W = 188;
   const TILE_H = 58;
   const GAP_X = 26;
   const GAP_Y = 30;
@@ -110,13 +110,18 @@
   function tileSvg(pos) {
     const d = pos.device;
     const color = ICON_COLORS[d.category] || "var(--accent)";
+    const textW = TILE_W - 50 - 10; // tile width minus icon column minus right margin
     return `
       <g class="topo-tile status-${d.status}" transform="translate(${pos.x},${pos.y})">
         <rect class="tile-bg" width="${TILE_W}" height="${TILE_H}" rx="10"></rect>
         <circle class="tile-dot" cx="14" cy="16" r="4"></circle>
         <g transform="translate(24,6)">${icon(d.category, color)}</g>
-        <text class="tile-name" x="50" y="20">${StokesPulse.escapeHtml(d.name)}</text>
-        <text class="tile-sub" x="50" y="34">${StokesPulse.escapeHtml(d.ip)}</text>
+        <foreignObject x="50" y="6" width="${textW}" height="${TILE_H - 10}">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="tile-text">
+            <div class="tile-name-html" title="${StokesPulse.escapeHtml(d.name)}">${StokesPulse.escapeHtml(d.name)}</div>
+            <div class="tile-sub-html">${StokesPulse.escapeHtml(d.ip)}</div>
+          </div>
+        </foreignObject>
       </g>`;
   }
 

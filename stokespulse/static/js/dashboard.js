@@ -18,6 +18,9 @@
     return `<svg class="sparkline" width="100%" height="24" viewBox="0 0 100 24" preserveAspectRatio="none"><path d="M${pts.join(" L")}"></path></svg>`;
   }
 
+  const PAUSE_ICON = '<svg viewBox="0 0 16 16" width="13" height="13"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"></rect><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"></rect></svg>';
+  const PLAY_ICON = '<svg viewBox="0 0 16 16" width="13" height="13"><path d="M4 2.5 L13.5 8 L4 13.5 Z" fill="currentColor"></path></svg>';
+
   function renderCard(d) {
     const portBadges =
       d.ports_open.map((p) => `<span class="port-badge open">${p}</span>`).join("") +
@@ -29,7 +32,7 @@
         <div class="device-card-head">
           <span class="status-dot status-${d.status}" title="${d.status}"></span>
           <span class="device-card-name">${StokesPulse.escapeHtml(d.name)}</span>
-          <button class="mute-bell ${d.muted ? "muted" : ""}" data-id="${d.id}" data-muted="${d.muted}" title="${d.muted ? "Unmute alerts" : "Mute alerts"}">${d.muted ? "\u{1F515}" : "\u{1F514}"}</button>
+          <button class="pause-btn ${d.muted ? "paused" : ""}" data-id="${d.id}" data-muted="${d.muted}" title="${d.muted ? "Resume alerts" : "Pause alerts"}">${d.muted ? PLAY_ICON : PAUSE_ICON}</button>
         </div>
         <div class="device-card-ip">${d.ip}</div>
         ${d.ports.length ? `<div class="port-badges">${portBadges}</div>` : ""}
@@ -57,7 +60,7 @@
         order.map((g) => renderGroup(g, groups[g])).join("") ||
         '<div class="empty-state">No devices configured.</div>';
 
-      StokesPulse.qsa(".mute-bell", root).forEach((btn) =>
+      StokesPulse.qsa(".pause-btn", root).forEach((btn) =>
         btn.addEventListener("click", async (e) => {
           e.stopPropagation();
           const id = btn.dataset.id;
