@@ -2,6 +2,7 @@
   const STORAGE_KEY = "stokespulse-theme";
   const THEMES = [
     { id: "midnight-violet", name: "Midnight Violet", swatch: "#8b7bf0" },
+    { id: "midnight-blue", name: "Midnight Blue", swatch: "#38bdf8" },
     { id: "cyan-current", name: "Cyan Current", swatch: "#22d3ee" },
     { id: "amber-console", name: "Amber Console", swatch: "#f59e0b" },
     { id: "matrix-green", name: "Matrix Green", swatch: "#34d399" },

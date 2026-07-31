@@ -77,6 +77,23 @@
   --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
 }
 
+/* Same chrome palette as Midnight Violet, but "healthy/up" reads as blue
+   instead of green — must come after the :root --up default above so this
+   override actually wins (equal specificity, later source wins). */
+[data-theme="midnight-blue"] {
+  --accent: #8b7bf0;
+  --accent-dim: #4c3f9e;
+  --accent-glow: rgba(139, 123, 240, 0.22);
+  --bg: #0a0a10;
+  --bg-elev: #121119;
+  --bg-elev-2: #191826;
+  --border: #262238;
+  --chrome: #55506e;
+  --text: #e4e2ee;
+  --text-dim: #8b87a3;
+  --up: #38bdf8;
+}
+
 * { box-sizing: border-box; }
 
 html, body {
