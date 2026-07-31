@@ -42,7 +42,7 @@ def setup():
             error = "Passwords do not match."
         else:
             try:
-                auth.create_user(username, password)
+                auth.create_user(username, password, role="admin")
                 session.clear()
                 session["user"] = username
                 session.permanent = True

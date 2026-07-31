@@ -13,6 +13,10 @@ ACCENT = "#a855f7"  # purple/violet
 # Flask's own static file server so the login page can load CSS/JS).
 PUBLIC_ENDPOINTS = {"auth.login", "auth.setup", "auth.logout", "static"}
 
+# API paths behind the Maintenance/Settings/Users tabs — regular users don't
+# get these even though they're logged in.
+ADMIN_ONLY_PATH_PREFIXES = ("/api/maintenance", "/api/settings", "/api/users")
+
 
 def create_app(start_background=True):
     app = Flask(__name__)
@@ -41,6 +45,8 @@ def create_app(start_background=True):
             if request.path.startswith("/api/"):
                 return jsonify({"error": "unauthorized"}), 401
             return redirect(url_for("auth.login"))
+        if request.path.startswith(ADMIN_ONLY_PATH_PREFIXES) and not auth.is_admin(session["user"]):
+            return jsonify({"error": "admin access required"}), 403
         return None
 
     if start_background:

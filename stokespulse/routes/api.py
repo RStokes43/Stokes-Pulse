@@ -19,6 +19,7 @@ def meta():
         "version": version.get_version(),
         "groups_order": stats.GROUP_ORDER,
         "current_user": session.get("user"),
+        "role": auth.get_role(session.get("user")),
     })
 
 
@@ -28,7 +29,17 @@ def users_endpoint():
         return jsonify({"users": auth.list_users(), "current_user": session.get("user")})
     body = request.get_json(force=True) or {}
     try:
-        auth.create_user(body.get("username", ""), body.get("password", ""))
+        auth.create_user(body.get("username", ""), body.get("password", ""), role=body.get("role", "user"))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"users": auth.list_users()})
+
+
+@api_bp.route("/users/<username>", methods=["PATCH"])
+def update_user_role_endpoint(username):
+    body = request.get_json(force=True) or {}
+    try:
+        auth.set_role(username, body.get("role", ""))
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
     return jsonify({"users": auth.list_users()})

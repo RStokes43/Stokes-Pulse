@@ -17,7 +17,7 @@
         <h3>Settings</h3>
         <p>Configure SMTP for email alerts, recovery notifications, and an optional healthchecks.io heartbeat URL so you're told if Stokes-Pulse itself stops running. Your SMTP password is never sent back to the browser once saved — the field just shows whether one is set.</p>
         <h3>Users</h3>
-        <p>Add or remove login accounts. Passwords are hashed, never stored in plain text. You can't remove the last remaining account.</p>
+        <p>Add or remove login accounts and set each one's role. Admins see everything, including this tab; Users see Dashboard/Topology/Analytics/Event Log/Impact but not Maintenance, Settings, or Users. Passwords are hashed, never stored in plain text. You can't remove the last remaining account or demote the last remaining admin.</p>
         <h3>Version / changelog</h3>
         <p>The version badge in the header is your git commit count. Click it to see recent commit history.</p>
         <h3>Port-drift watch</h3>

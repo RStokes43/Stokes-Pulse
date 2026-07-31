@@ -34,7 +34,7 @@
   <nav class="nav-toplevel" id="nav-toplevel">
     <button class="nav-fn active" data-function="monitor">Monitor</button>
     <button class="nav-fn" data-function="insights">Insights</button>
-    <button class="nav-fn" data-function="admin">Admin</button>
+    {% if is_admin %}<button class="nav-fn" data-function="admin">Admin</button>{% endif %}
   </nav>
   <nav class="nav-sublevel" id="nav-sublevel">
     <div class="subgroup" data-group="monitor">
@@ -46,11 +46,13 @@
       <button class="nav-tab" data-tab="events">Event Log</button>
       <button class="nav-tab" data-tab="impact">Impact</button>
     </div>
+    {% if is_admin %}
     <div class="subgroup" data-group="admin" hidden>
       <button class="nav-tab active" data-tab="maintenance">Maintenance</button>
       <button class="nav-tab" data-tab="settings">Settings</button>
       <button class="nav-tab" data-tab="users">Users</button>
     </div>
+    {% endif %}
   </nav>
 
   <main class="content">
@@ -60,9 +62,11 @@
       <section class="tab-panel" id="tab-analytics" hidden><div id="analytics-root"></div></section>
       <section class="tab-panel" id="tab-events" hidden><div id="events-root"></div></section>
       <section class="tab-panel" id="tab-impact" hidden><div id="impact-root"></div></section>
+      {% if is_admin %}
       <section class="tab-panel" id="tab-maintenance" hidden><div id="maintenance-root"></div></section>
       <section class="tab-panel" id="tab-settings" hidden><div id="settings-root"></div></section>
       <section class="tab-panel" id="tab-users" hidden><div id="users-root"></div></section>
+      {% endif %}
     </div>
     <aside class="summary-sidebar" id="summary-sidebar"></aside>
   </main>
