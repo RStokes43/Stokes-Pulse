@@ -13,3 +13,11 @@ def index():
         accent=current_app.config["ACCENT"],
         is_admin=auth.is_admin(session.get("user")),
     )
+
+
+@pages_bp.route("/mobile")
+def mobile():
+    return render_template(
+        "mobile.html",
+        app_name=current_app.config["APP_NAME"],
+    )

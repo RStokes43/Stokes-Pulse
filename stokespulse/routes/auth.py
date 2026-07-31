@@ -9,11 +9,19 @@ def _app_name():
     return current_app.config["APP_NAME"]
 
 
+def _safe_next(value):
+    """Only allow same-site relative paths, never an absolute/external URL (open-redirect guard)."""
+    if value and value.startswith("/") and not value.startswith("//"):
+        return value
+    return url_for("pages.index")
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if not auth.has_any_users():
         return redirect(url_for("auth.setup"))
 
+    next_url = _safe_next(request.values.get("next", ""))
     error = None
     if request.method == "POST":
         username = request.form.get("username", "")
@@ -22,10 +30,10 @@ def login():
             session.clear()
             session["user"] = username
             session.permanent = True
-            return redirect(url_for("pages.index"))
+            return redirect(next_url)
         error = "Invalid username or password."
 
-    return render_template("login.html", error=error, app_name=_app_name())
+    return render_template("login.html", error=error, app_name=_app_name(), next=next_url)
 
 
 @auth_bp.route("/setup", methods=["GET", "POST"])

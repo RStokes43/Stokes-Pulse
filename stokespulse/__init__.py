@@ -44,7 +44,7 @@ def create_app(start_background=True):
         if not session.get("user"):
             if request.path.startswith("/api/"):
                 return jsonify({"error": "unauthorized"}), 401
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("auth.login", next=request.path))
         if request.path.startswith(ADMIN_ONLY_PATH_PREFIXES) and not auth.is_admin(session["user"]):
             return jsonify({"error": "admin access required"}), 403
         return None

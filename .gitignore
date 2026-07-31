@@ -11,3 +11,10 @@ config/alert_overrides.json
 config/users.json
 config/secret_key
 data/
+
+# Android build output — the APK GitHub Actions builds is committed
+# separately to android/dist/, everything else here is regenerable.
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties

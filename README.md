@@ -68,3 +68,11 @@ units) is in [`deploy/proxmox/README.md`](deploy/proxmox/README.md).
 
 An nginx reverse-proxy config for fronting the app is in
 [`deploy/proxmox/nginx-stokespulse.conf`](deploy/proxmox/nginx-stokespulse.conf).
+
+## Android app
+
+A sideloadable Android app (Kotlin, WebView wrapper around a dedicated
+mobile-optimized `/mobile` view — not just the desktop site) lives in
+[`android/`](android/README.md). GitHub Actions builds the APK on every push
+to that folder and commits it to `android/dist/stokes-pulse.apk` — see
+[`android/README.md`](android/README.md) for sideloading steps.

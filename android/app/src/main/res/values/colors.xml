@@ -1,0 +1,8 @@
+<resources>
+    <color name="bg">#0A0A10</color>
+    <color name="bg_elev">#121119</color>
+    <color name="accent">#8273AA</color>
+    <color name="status_up">#38BDF8</color>
+    <color name="text">#E4E2EE</color>
+    <color name="text_dim">#8B87A3</color>
+</resources>

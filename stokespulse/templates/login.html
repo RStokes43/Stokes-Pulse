@@ -27,6 +27,7 @@
     <div class="sub">Sign in to continue</div>
     {% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
     <form method="post">
+      <input type="hidden" name="next" value="{{ next }}">
       <div class="form-row"><label>Username</label><input type="text" name="username" autofocus required></div>
       <div class="form-row"><label>Password</label><input type="password" name="password" required></div>
       <button class="btn" type="submit" style="width:100%">Sign in</button>
