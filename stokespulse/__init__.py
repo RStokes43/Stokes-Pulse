@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 
 from flask import Flask, jsonify, redirect, request, session, url_for
@@ -12,6 +13,8 @@ ACCENT = "#a855f7"  # purple/violet
 # Endpoints reachable without a session (login/setup pages + their POSTs, and
 # Flask's own static file server so the login page can load CSS/JS).
 PUBLIC_ENDPOINTS = {"auth.login", "auth.setup", "auth.logout", "static"}
+
+MOBILE_UA_RE = re.compile(r"Android|iPhone|iPod|Windows Phone|BlackBerry", re.I)
 
 # API paths behind the Maintenance/Settings/Users tabs — regular users don't
 # get these even though they're logged in.
@@ -37,10 +40,22 @@ def create_app(start_background=True):
 
     @app.before_request
     def require_login():
+        # Must run before the login-redirect logic below, otherwise an
+        # unauthenticated mobile visitor gets bounced to
+        # /login?next=/ (desktop) instead of /login?next=/mobile.
+        if (
+            request.path == "/"
+            and request.args.get("desktop") != "1"
+            and MOBILE_UA_RE.search(request.headers.get("User-Agent", ""))
+        ):
+            return redirect(url_for("pages.mobile"))
+
         if request.endpoint in PUBLIC_ENDPOINTS:
             return None
         if not auth.has_any_users():
-            return redirect(url_for("auth.setup"))
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "unauthorized"}), 401
+            return redirect(url_for("auth.setup", next=request.path))
         if not session.get("user"):
             if request.path.startswith("/api/"):
                 return jsonify({"error": "unauthorized"}), 401

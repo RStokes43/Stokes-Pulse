@@ -1,19 +1,14 @@
-import re
-
-from flask import Blueprint, current_app, redirect, render_template, request, session, url_for
+from flask import Blueprint, current_app, render_template, session
 
 from .. import auth
 
 pages_bp = Blueprint("pages", __name__)
 
-MOBILE_UA_RE = re.compile(r"Android|iPhone|iPod|Windows Phone|BlackBerry", re.I)
-
 
 @pages_bp.route("/")
 def index():
-    ua = request.headers.get("User-Agent", "")
-    if MOBILE_UA_RE.search(ua) and request.args.get("desktop") != "1":
-        return redirect(url_for("pages.mobile"))
+    # Mobile User-Agent redirect to /mobile happens in the app-level
+    # before_request hook (must run ahead of the login-redirect logic there).
     return render_template(
         "index.html",
         app_name=current_app.config["APP_NAME"],

@@ -27,6 +27,7 @@
     <div class="sub">No accounts exist yet — create the first admin account.</div>
     {% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
     <form method="post">
+      <input type="hidden" name="next" value="{{ next }}">
       <div class="form-row"><label>Username</label><input type="text" name="username" autofocus required></div>
       <div class="form-row"><label>Password (min 8 characters)</label><input type="password" name="password" minlength="8" required></div>
       <div class="form-row"><label>Confirm password</label><input type="password" name="confirm" minlength="8" required></div>

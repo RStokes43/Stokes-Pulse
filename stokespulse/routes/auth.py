@@ -18,10 +18,11 @@ def _safe_next(value):
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    if not auth.has_any_users():
-        return redirect(url_for("auth.setup"))
-
     next_url = _safe_next(request.values.get("next", ""))
+
+    if not auth.has_any_users():
+        return redirect(url_for("auth.setup", next=next_url))
+
     error = None
     if request.method == "POST":
         username = request.form.get("username", "")
@@ -41,6 +42,7 @@ def setup():
     if auth.has_any_users():
         return redirect(url_for("auth.login"))
 
+    next_url = _safe_next(request.values.get("next", ""))
     error = None
     if request.method == "POST":
         username = request.form.get("username", "")
@@ -54,11 +56,11 @@ def setup():
                 session.clear()
                 session["user"] = username
                 session.permanent = True
-                return redirect(url_for("pages.index"))
+                return redirect(next_url)
             except ValueError as exc:
                 error = str(exc)
 
-    return render_template("setup.html", error=error, app_name=_app_name())
+    return render_template("setup.html", error=error, app_name=_app_name(), next=next_url)
 
 
 @auth_bp.route("/logout", methods=["POST"])
