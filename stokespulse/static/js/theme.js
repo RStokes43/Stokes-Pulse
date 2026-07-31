@@ -10,7 +10,7 @@
   ];
 
   function current() {
-    return localStorage.getItem(STORAGE_KEY) || "midnight-violet";
+    return localStorage.getItem(STORAGE_KEY) || "midnight-blue";
   }
 
   function apply(id) {

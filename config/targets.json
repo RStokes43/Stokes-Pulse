@@ -11,11 +11,20 @@
       "depends_on": null
     },
     {
-      "id": "internet-wan",
-      "name": "Internet (WAN)",
+      "id": "cloudflare-dns",
+      "name": "Cloudflare DNS",
       "category": "internet",
       "group": "Internet",
       "ip": "1.1.1.1",
+      "ports": [443],
+      "depends_on": "stokes-cloud"
+    },
+    {
+      "id": "google-dns",
+      "name": "Google DNS",
+      "category": "internet",
+      "group": "Internet",
+      "ip": "8.8.8.8",
       "ports": [443],
       "depends_on": "stokes-cloud"
     },
