@@ -20,4 +20,5 @@ def mobile():
     return render_template(
         "mobile.html",
         app_name=current_app.config["APP_NAME"],
+        is_admin=auth.is_admin(session.get("user")),
     )
