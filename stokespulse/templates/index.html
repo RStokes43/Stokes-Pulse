@@ -4,6 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ app_name }}</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stokespulse-theme") || "midnight-violet";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -11,10 +19,11 @@
     <div class="brand">
       <svg class="logo-dot" id="logo-dot" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10"/></svg>
       <span class="brand-name">{{ app_name }}</span>
-      <button class="version-badge" id="version-badge" title="View changelog">v0</button>
     </div>
     <div class="health-banner" id="health-banner">Loading…</div>
     <div class="topbar-actions">
+      <button class="icon-btn" id="theme-btn" title="Theme">&#127912;</button>
+      <div class="theme-picker-popover" id="theme-popover" hidden></div>
       <button class="icon-btn" id="help-btn" title="Help">?</button>
     </div>
   </header>
@@ -50,11 +59,10 @@
       <section class="tab-panel" id="tab-maintenance" hidden><div id="maintenance-root"></div></section>
       <section class="tab-panel" id="tab-settings" hidden><div id="settings-root"></div></section>
     </div>
-    <aside class="summary-sidebar" id="summary-sidebar">
-      <h3>Summary</h3>
-      <div id="summary-content">Loading…</div>
-    </aside>
+    <aside class="summary-sidebar" id="summary-sidebar"></aside>
   </main>
+
+  <button class="changelog-fab" id="changelog-fab" title="View changelog">v0</button>
 
   <div class="modal" id="help-modal" hidden>
     <div class="modal-backdrop" data-close-modal></div>
@@ -79,6 +87,7 @@
   </div>
 
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
   <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
   <script src="{{ url_for('static', filename='js/topology.js') }}"></script>
   <script src="{{ url_for('static', filename='js/analytics.js') }}"></script>

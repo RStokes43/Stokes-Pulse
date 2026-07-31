@@ -1,13 +1,74 @@
+/* ==========================================================================
+   Theme system — swap the "chrome" palette via [data-theme] on <html>.
+   Status colors (--up/--degraded/--down/--muted) stay constant across themes.
+   ========================================================================== */
+:root,
+[data-theme="midnight-violet"] {
+  --accent: #8b7bf0;
+  --accent-dim: #4c3f9e;
+  --accent-glow: rgba(139, 123, 240, 0.22);
+  --bg: #0a0a10;
+  --bg-elev: #121119;
+  --bg-elev-2: #191826;
+  --border: #262238;
+  --chrome: #55506e;
+  --text: #e4e2ee;
+  --text-dim: #8b87a3;
+}
+
+[data-theme="cyan-current"] {
+  --accent: #22d3ee;
+  --accent-dim: #0e7490;
+  --accent-glow: rgba(34, 211, 238, 0.2);
+  --bg: #070d10;
+  --bg-elev: #0e161b;
+  --bg-elev-2: #142129;
+  --border: #1e2f38;
+  --chrome: #3d5a63;
+  --text: #dff5fa;
+  --text-dim: #82a3ab;
+}
+
+[data-theme="amber-console"] {
+  --accent: #f59e0b;
+  --accent-dim: #92400e;
+  --accent-glow: rgba(245, 158, 11, 0.2);
+  --bg: #0d0a06;
+  --bg-elev: #16110a;
+  --bg-elev-2: #1f180e;
+  --border: #332616;
+  --chrome: #5c4a2f;
+  --text: #f3e9d8;
+  --text-dim: #a8977e;
+}
+
+[data-theme="matrix-green"] {
+  --accent: #34d399;
+  --accent-dim: #15803d;
+  --accent-glow: rgba(52, 211, 153, 0.2);
+  --bg: #06090a;
+  --bg-elev: #0d1410;
+  --bg-elev-2: #131d17;
+  --border: #1c2e23;
+  --chrome: #3a5646;
+  --text: #dcf5ea;
+  --text-dim: #83a696;
+}
+
+[data-theme="crimson"] {
+  --accent: #fb7185;
+  --accent-dim: #9f1239;
+  --accent-glow: rgba(251, 113, 133, 0.2);
+  --bg: #0c0708;
+  --bg-elev: #160d0e;
+  --bg-elev-2: #201213;
+  --border: #35191c;
+  --chrome: #5c3a3d;
+  --text: #f6e4e6;
+  --text-dim: #ab8689;
+}
+
 :root {
-  --accent: #a855f7;
-  --accent-dim: #7e22ce;
-  --accent-glow: rgba(168, 85, 247, 0.35);
-  --bg: #0b0a10;
-  --bg-elev: #131220;
-  --bg-elev-2: #1a1830;
-  --border: #2a2740;
-  --text: #e6e4f0;
-  --text-dim: #9b97b5;
   --up: #22c55e;
   --degraded: #f59e0b;
   --down: #ef4444;
@@ -89,7 +150,63 @@ button {
 .health-banner.degraded { background: rgba(245, 158, 11, 0.12); color: var(--degraded); }
 .health-banner.down { background: rgba(239, 68, 68, 0.14); color: var(--down); }
 
-.topbar-actions { display: flex; gap: 8px; }
+.topbar-actions { display: flex; gap: 8px; position: relative; }
+
+/* ---------- Theme picker ---------- */
+.theme-picker-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 30;
+}
+.theme-picker-popover[hidden] { display: none; }
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: var(--text);
+  font-size: 12px;
+  text-align: left;
+}
+.theme-option:hover { background: rgba(255, 255, 255, 0.05); }
+.theme-option.active { border-color: var(--accent); background: var(--accent-glow); }
+.theme-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+/* ---------- Changelog floating button ---------- */
+.changelog-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 25;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+.changelog-fab:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ---------- Nav ---------- */
 .nav-toplevel {
@@ -141,17 +258,58 @@ button {
 }
 .tab-panel[hidden] { display: none; }
 .summary-sidebar {
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   height: fit-content;
   position: sticky;
   top: 92px;
 }
-.summary-sidebar h3 { margin: 0 0 10px; font-size: 13px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.side-panel {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.side-panel h3 { margin: 0 0 10px; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
 .summary-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
 .summary-row .n { font-family: var(--mono); font-weight: 700; }
+
+/* ---------- Health hero card ---------- */
+.health-hero .hero-status {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+.health-hero .hero-status.up { color: var(--up); }
+.health-hero .hero-status.degraded { color: var(--degraded); }
+.health-hero .hero-status.down { color: var(--down); }
+.health-hero .hero-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+}
+
+/* ---------- Device latency list (dashboard "Summary" / topology "Connection Latency") ---------- */
+.device-latency-list { display: flex; flex-direction: column; gap: 2px; max-height: 420px; overflow-y: auto; }
+.latency-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--border);
+}
+.latency-row:last-child { border-bottom: none; }
+.latency-row .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.latency-row .val { font-family: var(--mono); color: var(--text-dim); }
+
+/* ---------- Recent incidents list ---------- */
+.incident-list { display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto; }
+.incident-item { font-size: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.incident-item:last-child { border-bottom: none; padding-bottom: 0; }
+.incident-item .incident-device { font-weight: 700; color: var(--text); display: block; margin-bottom: 2px; }
+.incident-item .incident-meta { color: var(--text-dim); }
 
 /* ---------- Cards ---------- */
 .category-group { margin-bottom: 22px; }
@@ -196,25 +354,33 @@ button {
 .sparkline path { fill: none; stroke: var(--accent); stroke-width: 1.5; }
 
 /* ---------- Topology ---------- */
-.topology-wrap { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; padding: 12px; overflow-x: auto; }
-.topo-node circle { stroke-width: 2; }
-.topo-node.status-up circle { stroke: var(--up); fill: rgba(34,197,94,0.12); }
-.topo-node.status-degraded circle { stroke: var(--degraded); fill: rgba(245,158,11,0.12); }
-.topo-node.status-down circle { stroke: var(--down); fill: rgba(239,68,68,0.15); }
-.topo-node text { fill: var(--text); font-size: 10px; font-family: var(--font); }
-.topo-node .sub { fill: var(--text-dim); font-size: 8px; }
-.topo-zone-label { fill: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.topology-wrap { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; padding: 20px; overflow-x: auto; }
+
+.topo-zone-band { fill: rgba(255, 255, 255, 0.015); stroke: var(--border); stroke-width: 1; }
+.topo-zone-label { fill: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+
+.tile-bg { fill: var(--bg-elev-2); stroke-width: 1.5; transition: stroke 0.3s ease; }
+.topo-tile.status-up .tile-bg { stroke: var(--up); }
+.topo-tile.status-degraded .tile-bg { stroke: var(--degraded); }
+.topo-tile.status-down .tile-bg { stroke: var(--down); filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.35)); }
+.tile-dot { stroke-width: 0; }
+.topo-tile.status-up .tile-dot { fill: var(--up); filter: drop-shadow(0 0 3px var(--up)); }
+.topo-tile.status-degraded .tile-dot { fill: var(--degraded); filter: drop-shadow(0 0 3px var(--degraded)); }
+.topo-tile.status-down .tile-dot { fill: var(--down); filter: drop-shadow(0 0 3px var(--down)); }
+.tile-name { fill: var(--text); font-size: 12px; font-weight: 700; font-family: var(--font); }
+.tile-sub { fill: var(--text-dim); font-size: 10px; font-family: var(--mono); }
+
 .topo-link { stroke: var(--border); stroke-width: 1.5; fill: none; }
-.topo-link.status-up { stroke: var(--up); }
-.topo-link.status-degraded { stroke: var(--degraded); }
-.topo-link.status-down { stroke: var(--down); }
+.topo-link.status-up { stroke: var(--up); opacity: 0.5; }
+.topo-link.status-degraded { stroke: var(--degraded); opacity: 0.6; }
+.topo-link.status-down { stroke: var(--down); opacity: 0.7; }
 .topo-flow {
   stroke: var(--accent);
   stroke-width: 2;
   fill: none;
   stroke-dasharray: 6px 10px;
   animation: flow 1s linear infinite;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 @keyframes flow {
   from { stroke-dashoffset: 0px; }

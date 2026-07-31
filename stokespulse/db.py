@@ -159,10 +159,13 @@ def close_event(event_id, details=None):
         conn.close()
 
 
-def set_event_alerted(event_id, alerted):
+def set_event_alerted(event_id, alerted, details=None):
     conn = get_conn()
     try:
-        conn.execute("UPDATE events SET alerted=? WHERE id=?", (alerted, event_id))
+        if details is not None:
+            conn.execute("UPDATE events SET alerted=?, details=? WHERE id=?", (alerted, details, event_id))
+        else:
+            conn.execute("UPDATE events SET alerted=? WHERE id=?", (alerted, event_id))
         conn.commit()
     finally:
         conn.close()

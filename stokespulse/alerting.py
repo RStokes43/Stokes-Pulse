@@ -34,6 +34,7 @@ def process_transitions(newly_down, newly_recovered):
     maintenance = config.load_maintenance()
     overrides = config.load_alert_overrides()
     mutes = overrides.get("mutes", {})
+    device_names = {d["id"]: d["name"] for d in config.load_targets()}
 
     to_alert_down = []
     for device, event_id in newly_down:
@@ -47,7 +48,11 @@ def process_transitions(newly_down, newly_recovered):
         if parent_id:
             parent_state = db.get_device_state(parent_id)
             if parent_state and parent_state["status"] == "down":
-                db.set_event_alerted(event_id, "suppressed")
+                parent_name = device_names.get(parent_id, parent_id)
+                db.set_event_alerted(
+                    event_id, "suppressed",
+                    details=f"suppressed: depends on {parent_name}, also down",
+                )
                 continue
         to_alert_down.append((device, event_id))
 
