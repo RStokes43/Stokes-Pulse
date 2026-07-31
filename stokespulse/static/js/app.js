@@ -146,6 +146,7 @@ const StokesPulse = (function () {
   function wireNav() {
     qsa(".nav-fn").forEach((b) => b.addEventListener("click", () => showFunction(b.dataset.function)));
     qsa(".nav-tab").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+    qs("#health-banner").addEventListener("click", () => showFunction("insights"));
     qsa("[data-close-modal]").forEach((b) =>
       b.addEventListener("click", (e) => {
         const modal = e.target.closest(".modal");

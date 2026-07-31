@@ -4,9 +4,11 @@
    ========================================================================== */
 :root,
 [data-theme="midnight-violet"] {
-  --accent: #8b7bf0;
-  --accent-dim: #4c3f9e;
-  --accent-glow: rgba(139, 123, 240, 0.22);
+  /* Base brand purple is #1b0065, blended lighter so it stays visible
+     (borders/sparklines/badges) against the near-black background. */
+  --accent: #8273aa;
+  --accent-dim: #483f5e;
+  --accent-glow: rgba(130, 115, 170, 0.22);
   --bg: #0a0a10;
   --bg-elev: #121119;
   --bg-elev-2: #191826;
@@ -81,9 +83,9 @@
    instead of green — must come after the :root --up default above so this
    override actually wins (equal specificity, later source wins). */
 [data-theme="midnight-blue"] {
-  --accent: #8b7bf0;
-  --accent-dim: #4c3f9e;
-  --accent-glow: rgba(139, 123, 240, 0.22);
+  --accent: #8273aa;
+  --accent-dim: #483f5e;
+  --accent-glow: rgba(130, 115, 170, 0.22);
   --bg: #0a0a10;
   --bg-elev: #121119;
   --bg-elev-2: #191826;
@@ -161,11 +163,13 @@ button {
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 8px;
-  background: rgba(34, 197, 94, 0.12);
+  background: color-mix(in srgb, var(--up) 12%, transparent);
   color: var(--up);
+  cursor: pointer;
 }
-.health-banner.degraded { background: rgba(245, 158, 11, 0.12); color: var(--degraded); }
-.health-banner.down { background: rgba(239, 68, 68, 0.14); color: var(--down); }
+.health-banner:hover { filter: brightness(1.15); }
+.health-banner.degraded { background: color-mix(in srgb, var(--degraded) 12%, transparent); color: var(--degraded); }
+.health-banner.down { background: color-mix(in srgb, var(--down) 14%, transparent); color: var(--down); }
 
 .topbar-actions { display: flex; gap: 8px; position: relative; }
 
@@ -351,7 +355,7 @@ button {
   padding: 12px;
   position: relative;
 }
-.device-card.status-down { border-color: var(--down); box-shadow: 0 0 0 1px rgba(239,68,68,0.2); }
+.device-card.status-down { border-color: var(--down); box-shadow: 0 0 0 1px color-mix(in srgb, var(--down) 20%, transparent); }
 .device-card.status-degraded { border-color: var(--degraded); }
 .device-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
@@ -365,8 +369,8 @@ button {
 .device-card-ip { font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-bottom: 8px; }
 .port-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
 .port-badge { font-family: var(--mono); font-size: 10px; padding: 1px 6px; border-radius: 8px; }
-.port-badge.open { background: rgba(34,197,94,0.15); color: var(--up); }
-.port-badge.closed { background: rgba(239,68,68,0.15); color: var(--down); }
+.port-badge.open { background: color-mix(in srgb, var(--up) 15%, transparent); color: var(--up); }
+.port-badge.closed { background: color-mix(in srgb, var(--down) 15%, transparent); color: var(--down); }
 .card-metrics { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-dim); }
 .sparkline { display: block; margin: 6px 0; }
 .sparkline path { fill: none; stroke: var(--accent); stroke-width: 1.5; }
@@ -380,7 +384,7 @@ button {
 .tile-bg { fill: var(--bg-elev-2); stroke-width: 1.5; transition: stroke 0.3s ease; }
 .topo-tile.status-up .tile-bg { stroke: var(--up); }
 .topo-tile.status-degraded .tile-bg { stroke: var(--degraded); }
-.topo-tile.status-down .tile-bg { stroke: var(--down); filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.35)); }
+.topo-tile.status-down .tile-bg { stroke: var(--down); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--down) 35%, transparent)); }
 .tile-dot { stroke-width: 0; }
 .topo-tile.status-up .tile-dot { fill: var(--up); filter: drop-shadow(0 0 3px var(--up)); }
 .topo-tile.status-degraded .tile-dot { fill: var(--degraded); filter: drop-shadow(0 0 3px var(--degraded)); }
@@ -435,9 +439,9 @@ table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 table.data-table th, table.data-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
 table.data-table th { color: var(--text-dim); font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; background: rgba(255,255,255,0.08); color: var(--text-dim); }
-.badge.up { background: rgba(34,197,94,0.15); color: var(--up); }
-.badge.degraded { background: rgba(245,158,11,0.15); color: var(--degraded); }
-.badge.down { background: rgba(239,68,68,0.15); color: var(--down); }
+.badge.up { background: color-mix(in srgb, var(--up) 15%, transparent); color: var(--up); }
+.badge.degraded { background: color-mix(in srgb, var(--degraded) 15%, transparent); color: var(--degraded); }
+.badge.down { background: color-mix(in srgb, var(--down) 15%, transparent); color: var(--down); }
 .badge.sent { background: rgba(168,85,247,0.18); color: var(--accent); }
 .badge.muted, .badge.suppressed, .badge.maintenance { background: rgba(107,114,128,0.2); color: var(--muted); }
 
