@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — {{ app_name }}</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("stokespulse-theme") || "midnight-blue";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .auth-card { width: min(360px, 90vw); }
+    .auth-card h1 { font-size: 18px; margin: 0 0 4px; }
+    .auth-card .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }
+    .auth-error { color: var(--down); font-size: 13px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <div class="panel auth-card">
+    <h1>{{ app_name }}</h1>
+    <div class="sub">Sign in to continue</div>
+    {% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
+    <form method="post">
+      <div class="form-row"><label>Username</label><input type="text" name="username" autofocus required></div>
+      <div class="form-row"><label>Password</label><input type="password" name="password" required></div>
+      <button class="btn" type="submit" style="width:100%">Sign in</button>
+    </form>
+  </div>
+</body>
+</html>

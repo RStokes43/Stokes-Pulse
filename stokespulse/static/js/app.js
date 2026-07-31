@@ -7,6 +7,10 @@ const StokesPulse = (function () {
 
   async function fetchJSON(url, opts) {
     const res = await fetch(url, opts);
+    if (res.status === 401) {
+      window.location.href = "/login";
+      throw new Error("session expired");
+    }
     if (!res.ok) throw new Error(`${url} -> ${res.status}`);
     return res.json();
   }

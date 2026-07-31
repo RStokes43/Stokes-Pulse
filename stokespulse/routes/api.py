@@ -1,8 +1,8 @@
 import uuid
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 
-from .. import alerting, config, db, stats, version
+from .. import alerting, auth, config, db, stats, version
 
 api_bp = Blueprint("api", __name__)
 
@@ -18,7 +18,31 @@ def meta():
         "accent": "#a855f7",
         "version": version.get_version(),
         "groups_order": stats.GROUP_ORDER,
+        "current_user": session.get("user"),
     })
+
+
+@api_bp.route("/users", methods=["GET", "POST"])
+def users_endpoint():
+    if request.method == "GET":
+        return jsonify({"users": auth.list_users(), "current_user": session.get("user")})
+    body = request.get_json(force=True) or {}
+    try:
+        auth.create_user(body.get("username", ""), body.get("password", ""))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"users": auth.list_users()})
+
+
+@api_bp.route("/users/<username>", methods=["DELETE"])
+def delete_user_endpoint(username):
+    try:
+        auth.delete_user(username)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    if session.get("user", "").lower() == (username or "").lower():
+        session.clear()
+    return jsonify({"users": auth.list_users()})
 
 
 @api_bp.route("/changelog")

@@ -25,6 +25,9 @@
       <button class="icon-btn" id="theme-btn" title="Theme">&#127912;</button>
       <div class="theme-picker-popover" id="theme-popover" hidden></div>
       <button class="icon-btn" id="help-btn" title="Help">?</button>
+      <form method="post" action="/logout">
+        <button class="icon-btn" type="submit" title="Log out">&#9211;</button>
+      </form>
     </div>
   </header>
 
@@ -46,6 +49,7 @@
     <div class="subgroup" data-group="admin" hidden>
       <button class="nav-tab active" data-tab="maintenance">Maintenance</button>
       <button class="nav-tab" data-tab="settings">Settings</button>
+      <button class="nav-tab" data-tab="users">Users</button>
     </div>
   </nav>
 
@@ -58,6 +62,7 @@
       <section class="tab-panel" id="tab-impact" hidden><div id="impact-root"></div></section>
       <section class="tab-panel" id="tab-maintenance" hidden><div id="maintenance-root"></div></section>
       <section class="tab-panel" id="tab-settings" hidden><div id="settings-root"></div></section>
+      <section class="tab-panel" id="tab-users" hidden><div id="users-root"></div></section>
     </div>
     <aside class="summary-sidebar" id="summary-sidebar"></aside>
   </main>
@@ -95,6 +100,7 @@
   <script src="{{ url_for('static', filename='js/impact.js') }}"></script>
   <script src="{{ url_for('static', filename='js/maintenance.js') }}"></script>
   <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/users.js') }}"></script>
   <script src="{{ url_for('static', filename='js/help.js') }}"></script>
   <script>StokesPulse.init();</script>
 </body>

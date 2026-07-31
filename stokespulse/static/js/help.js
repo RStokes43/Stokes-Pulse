@@ -16,6 +16,8 @@
         <p>Schedule one-time or recurring daily quiet windows so planned work doesn't trigger alerts or clutter the event log.</p>
         <h3>Settings</h3>
         <p>Configure SMTP for email alerts, recovery notifications, and an optional healthchecks.io heartbeat URL so you're told if Stokes-Pulse itself stops running. Your SMTP password is never sent back to the browser once saved — the field just shows whether one is set.</p>
+        <h3>Users</h3>
+        <p>Add or remove login accounts. Passwords are hashed, never stored in plain text. You can't remove the last remaining account.</p>
         <h3>Version / changelog</h3>
         <p>The version badge in the header is your git commit count. Click it to see recent commit history.</p>
         <h3>Port-drift watch</h3>

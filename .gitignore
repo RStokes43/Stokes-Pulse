@@ -8,4 +8,6 @@ config/alerting.json
 config/secrets.json
 config/maintenance.json
 config/alert_overrides.json
+config/users.json
+config/secret_key
 data/
