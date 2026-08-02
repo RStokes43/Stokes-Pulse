@@ -736,6 +736,10 @@
     if (!section) return;
     if (currentTimer) { clearInterval(currentTimer); currentTimer = null; }
     currentSection = name;
+    // Reflect the section in the URL hash so a page reload (e.g. the
+    // Android app's pull-to-refresh, which just reloads the current URL)
+    // lands back on the same section instead of resetting to the dashboard.
+    history.replaceState(null, "", `#${name}`);
     qsa(".m-drawer-item[data-section]").forEach((b) => b.classList.toggle("active", b.dataset.section === name));
     const run = () => Promise.resolve(section.render(content)).catch((e) => console.error(`[${name}]`, e));
     run();
@@ -831,5 +835,8 @@
 
   wireChrome();
   loadVersion();
-  showSection("dashboard");
+  const initialSection = (location.hash || "").slice(1);
+  const initialSectionAllowed =
+    SECTIONS[initialSection] && qs(`.m-drawer-item[data-section="${initialSection}"]`);
+  showSection(initialSectionAllowed ? initialSection : "dashboard");
 })();
