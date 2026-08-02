@@ -48,8 +48,15 @@
     .m-content { padding: 14px 16px calc(24px + env(safe-area-inset-bottom)); max-width: 640px; margin: 0 auto; }
 
     /* Drawer nav */
-    .m-drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 20; }
-    .m-drawer-backdrop[hidden] { display: none; }
+    .m-drawer-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease;
+    }
+    .m-drawer-backdrop.open { opacity: 1; pointer-events: auto; }
     .m-drawer {
       position: fixed;
       top: 0; left: 0; bottom: 0;
@@ -61,8 +68,10 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
+      transform: translateX(-100%);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    .m-drawer[hidden] { display: none; }
+    .m-drawer.open { transform: translateX(0); }
     .m-drawer-brand { font-weight: 700; font-size: 16px; padding: 4px 10px 16px; }
     .m-drawer-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); padding: 14px 10px 6px; }
     .m-drawer-item {
@@ -138,6 +147,24 @@
     .m-empty { color: var(--text-dim); text-align: center; padding: 40px 20px; font-size: 13px; }
     .m-content .panel { margin-bottom: 16px; }
     .m-content .data-table-wrap { overflow-x: auto; }
+
+    /* Loading spinner + content fade-in */
+    .m-loading { display: flex; align-items: center; justify-content: center; padding: 60px 20px; }
+    .m-spinner {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      animation: m-spin 0.7s linear infinite;
+    }
+    .m-spinner.small { width: 18px; height: 18px; border-width: 2px; }
+    @keyframes m-spin { to { transform: rotate(360deg); } }
+    @keyframes m-fade-in {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .m-content.m-fade-in { animation: m-fade-in 0.25s ease; }
   </style>
 </head>
 <body>
@@ -152,8 +179,8 @@
     </div>
   </header>
 
-  <div class="m-drawer-backdrop" id="drawer-backdrop" hidden></div>
-  <nav class="m-drawer" id="m-drawer" hidden>
+  <div class="m-drawer-backdrop" id="drawer-backdrop"></div>
+  <nav class="m-drawer" id="m-drawer">
     <div class="m-drawer-brand">{{ app_name }}</div>
 
     <div class="m-drawer-label">Monitor</div>

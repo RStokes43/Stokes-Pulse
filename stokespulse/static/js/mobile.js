@@ -731,6 +731,14 @@
   let currentSection = "dashboard";
   let currentTimer = null;
 
+  const LOADING_HTML = '<div class="m-loading"><div class="m-spinner"></div></div>';
+
+  function playContentFade() {
+    content.classList.remove("m-fade-in");
+    void content.offsetWidth; // restart the CSS animation
+    content.classList.add("m-fade-in");
+  }
+
   function showSection(name) {
     const section = SECTIONS[name];
     if (!section) return;
@@ -741,19 +749,26 @@
     // lands back on the same section instead of resetting to the dashboard.
     history.replaceState(null, "", `#${name}`);
     qsa(".m-drawer-item[data-section]").forEach((b) => b.classList.toggle("active", b.dataset.section === name));
-    const run = () => Promise.resolve(section.render(content)).catch((e) => console.error(`[${name}]`, e));
-    run();
-    if (section.refreshMs) currentTimer = setInterval(run, section.refreshMs);
+    // Show a spinner only for this first render of the section — the
+    // periodic refresh ticks below swap content in place with no spinner
+    // or fade, so live-updating tabs like Dashboard/Topology don't flicker.
+    content.innerHTML = LOADING_HTML;
+    const run = (isInitial) =>
+      Promise.resolve(section.render(content))
+        .then(() => { if (isInitial) playContentFade(); })
+        .catch((e) => console.error(`[${name}]`, e));
+    run(true);
+    if (section.refreshMs) currentTimer = setInterval(() => run(false), section.refreshMs);
     closeDrawer();
   }
 
   function openDrawer() {
-    qs("#m-drawer").hidden = false;
-    qs("#drawer-backdrop").hidden = false;
+    qs("#m-drawer").classList.add("open");
+    qs("#drawer-backdrop").classList.add("open");
   }
   function closeDrawer() {
-    qs("#m-drawer").hidden = true;
-    qs("#drawer-backdrop").hidden = true;
+    qs("#m-drawer").classList.remove("open");
+    qs("#drawer-backdrop").classList.remove("open");
   }
 
   function openModal(id) { qs(`#${id}`).hidden = false; }
@@ -778,7 +793,7 @@
       const dx = t.clientX - startX;
       const dy = t.clientY - startY;
       if (Date.now() - startT > MAX_MS || Math.abs(dy) > MAX_VERTICAL_PX) return;
-      const drawerOpen = !qs("#m-drawer").hidden;
+      const drawerOpen = qs("#m-drawer").classList.contains("open");
       if (!drawerOpen && startX <= EDGE_PX && dx > SWIPE_PX) {
         openDrawer();
       } else if (drawerOpen && dx < -SWIPE_PX) {
@@ -807,7 +822,7 @@
     qs("#changelog-item").addEventListener("click", async () => {
       closeDrawer();
       const body = qs("#changelog-body");
-      body.innerHTML = '<div class="empty-state">Loading…</div>';
+      body.innerHTML = LOADING_HTML;
       openModal("changelog-modal");
       try {
         const data = await fetchJSON("/api/changelog");
