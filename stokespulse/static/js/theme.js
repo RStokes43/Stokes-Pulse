@@ -7,6 +7,7 @@
     { id: "amber-console", name: "Amber Console", swatch: "#f59e0b" },
     { id: "matrix-green", name: "Matrix Green", swatch: "#34d399" },
     { id: "crimson", name: "Crimson", swatch: "#fb7185" },
+    { id: "spider-man", name: "Spider-Man", swatch: "#e2222e" },
   ];
 
   function current() {

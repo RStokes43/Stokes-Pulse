@@ -70,6 +70,20 @@
   --text-dim: #ab8689;
 }
 
+[data-theme="spider-man"] {
+  /* Webslinger red accent over a near-black, blue-tinted "suit" backdrop. */
+  --accent: #e2222e;
+  --accent-dim: #7a1017;
+  --accent-glow: rgba(226, 34, 46, 0.22);
+  --bg: #050814;
+  --bg-elev: #0b0f24;
+  --bg-elev-2: #121a36;
+  --border: #1c2747;
+  --chrome: #3a4b7a;
+  --text: #eef1fb;
+  --text-dim: #8a93b8;
+}
+
 :root {
   --up: #22c55e;
   --degraded: #f59e0b;
