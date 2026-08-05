@@ -556,7 +556,23 @@
   // ---------- Settings (admin) ----------
   async function renderSettings(root) {
     const cfg = await fetchJSON("/api/settings");
+    const oauthCfg = await fetchJSON("/api/settings/oauth");
     root.innerHTML = `
+      <div class="panel">
+        <h2>Google Sign-In</h2>
+        <div style="color:var(--text-dim);font-size:12px;margin-bottom:10px">
+          Redirect URI: <code>https://pulse.stokescloud.net/auth/google/callback</code>
+        </div>
+        <form id="oauth-form">
+          <div class="form-row"><label>Client ID</label><input type="text" name="client_id" value="${escapeHtml(oauthCfg.client_id || "")}" autocomplete="off"></div>
+          <div class="form-row">
+            <label>Client secret ${oauthCfg.has_client_secret ? "(set — leave blank to keep)" : ""}</label>
+            <input type="password" name="client_secret" placeholder="${oauthCfg.has_client_secret ? "••••••••" : ""}" autocomplete="new-password">
+          </div>
+          <button class="btn" type="submit">Save</button>
+          <div id="oauth-status" style="margin-top:8px;font-size:12px;color:var(--text-dim)"></div>
+        </form>
+      </div>
       <div class="panel">
         <h2>Alerting — SMTP</h2>
         <form id="settings-form">
@@ -613,40 +629,54 @@
       const res = await fetchJSON("/api/settings/test-email", { method: "POST" });
       statusEl.textContent = res.success ? "Test email sent!" : "Failed — check SMTP settings.";
     });
+
+    qs("#oauth-form", root).addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      await fetchJSON("/api/settings/oauth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_id: form.client_id.value, client_secret: form.client_secret.value }),
+      });
+      qs("#oauth-status", root).textContent = "Saved.";
+      renderSettings(root);
+    });
   }
 
-  // ---------- Users (admin) ----------
-  function roleSelect(username, role, disabled) {
-    return `<select class="user-role" data-username="${escapeHtml(username)}" data-prev="${role}" ${disabled ? "disabled" : ""}>
+  // ---------- Allowed Emails (admin) ----------
+  function roleSelect(email, role, disabled) {
+    return `<select class="email-role" data-email="${escapeHtml(email)}" data-prev="${role}" ${disabled ? "disabled" : ""}>
       <option value="user" ${role === "user" ? "selected" : ""}>User</option>
       <option value="admin" ${role === "admin" ? "selected" : ""}>Admin</option>
     </select>`;
   }
 
-  async function renderUsers(root) {
-    const data = await fetchJSON("/api/users");
+  async function renderAllowedEmails(root) {
+    const data = await fetchJSON("/api/allowed-emails");
     const currentUser = data.current_user;
-    const adminCount = data.users.filter((u) => u.role === "admin").length;
+    const adminCount = data.emails.filter((e) => e.role === "admin").length;
 
-    const rows = data.users
-      .map((u) => {
-        const isYou = u.username === currentUser;
-        const isLastAdmin = u.role === "admin" && adminCount <= 1;
+    const rows = data.emails
+      .map((e) => {
+        const isYou = e.email === currentUser;
+        const isLastAdmin = e.role === "admin" && adminCount <= 1;
         return `<tr>
-          <td>${escapeHtml(u.username)}${isYou ? " (you)" : ""}</td>
-          <td>${roleSelect(u.username, u.role, isLastAdmin)}</td>
-          <td><button class="btn secondary user-delete" data-username="${escapeHtml(u.username)}" ${data.users.length <= 1 ? "disabled" : ""}>✕</button></td>
+          <td>${escapeHtml(e.email)}${isYou ? " (you)" : ""}</td>
+          <td>${roleSelect(e.email, e.role, isLastAdmin)}</td>
+          <td><button class="btn secondary email-delete" data-email="${escapeHtml(e.email)}" ${data.emails.length <= 1 ? "disabled" : ""}>✕</button></td>
         </tr>`;
       })
       .join("");
 
     root.innerHTML = `
       <div class="panel">
-        <h2>Add a user</h2>
-        <form id="add-user-form">
-          <div class="form-row"><label>Username</label><input type="text" name="username" required></div>
-          <div class="form-row"><label>Password (min 8 chars)</label><input type="password" name="password" minlength="8" required></div>
-          <div class="form-row"><label>Confirm</label><input type="password" name="confirm" minlength="8" required></div>
+        <h2>Allow an email</h2>
+        <div style="color:var(--text-dim);font-size:12px;margin-bottom:10px">
+          Anyone on the home LAN already has full access without signing in —
+          this only gates Google sign-in from outside the LAN.
+        </div>
+        <form id="add-email-form">
+          <div class="form-row"><label>Email</label><input type="email" name="email" required></div>
           <div class="form-row"><label>Role</label>
             <select name="role">
               <option value="user" selected>User</option>
@@ -654,64 +684,60 @@
             </select>
           </div>
           <button class="btn" type="submit">Add</button>
-          <div id="user-form-status" style="margin-top:8px;font-size:12px;color:var(--down)"></div>
+          <div id="email-form-status" style="margin-top:8px;font-size:12px;color:var(--down)"></div>
         </form>
       </div>
       <div class="panel">
-        <h2>Existing users</h2>
+        <h2>Allowed emails</h2>
         <div class="data-table-wrap">
           <table class="data-table">
-            <thead><tr><th>Username</th><th>Role</th><th></th></tr></thead>
+            <thead><tr><th>Email</th><th>Role</th><th></th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
         </div>
       </div>`;
 
-    qs("#add-user-form", root).addEventListener("submit", async (e) => {
+    qs("#add-email-form", root).addEventListener("submit", async (e) => {
       e.preventDefault();
       const form = e.target;
-      const statusEl = qs("#user-form-status", root);
-      if (form.password.value !== form.confirm.value) {
-        statusEl.textContent = "Passwords do not match.";
-        return;
-      }
-      const res = await fetch("/api/users", {
+      const statusEl = qs("#email-form-status", root);
+      const res = await fetch("/api/allowed-emails", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: form.username.value, password: form.password.value, role: form.role.value }),
+        body: JSON.stringify({ email: form.email.value, role: form.role.value }),
       });
       const body = await res.json();
       if (!res.ok) {
-        statusEl.textContent = body.error || "Failed to add user.";
+        statusEl.textContent = body.error || "Failed to add email.";
         return;
       }
-      renderUsers(root);
+      renderAllowedEmails(root);
     });
 
-    qsa(".user-delete", root).forEach((btn) =>
+    qsa(".email-delete", root).forEach((btn) =>
       btn.addEventListener("click", async () => {
-        const username = btn.dataset.username;
-        const res = await fetch(`/api/users/${encodeURIComponent(username)}`, { method: "DELETE" });
+        const email = btn.dataset.email;
+        const res = await fetch(`/api/allowed-emails/${encodeURIComponent(email)}`, { method: "DELETE" });
         const body = await res.json();
-        if (!res.ok) { alert(body.error || "Failed to remove user."); return; }
-        if (username === currentUser) { window.location.href = "/login"; return; }
-        renderUsers(root);
+        if (!res.ok) { alert(body.error || "Failed to remove email."); return; }
+        if (email === currentUser) { window.location.href = "/login"; return; }
+        renderAllowedEmails(root);
       })
     );
 
-    qsa(".user-role", root).forEach((sel) =>
+    qsa(".email-role", root).forEach((sel) =>
       sel.addEventListener("change", async () => {
-        const username = sel.dataset.username;
+        const email = sel.dataset.email;
         const newRole = sel.value;
-        const res = await fetch(`/api/users/${encodeURIComponent(username)}`, {
+        const res = await fetch(`/api/allowed-emails/${encodeURIComponent(email)}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ role: newRole }),
         });
         const body = await res.json();
         if (!res.ok) { alert(body.error || "Failed to change role."); sel.value = sel.dataset.prev; return; }
-        if (username === currentUser && newRole !== "admin") { window.location.href = "/mobile"; return; }
-        renderUsers(root);
+        if (email === currentUser && newRole !== "admin") { window.location.href = "/mobile"; return; }
+        renderAllowedEmails(root);
       })
     );
   }
@@ -725,7 +751,7 @@
     impact: { render: renderImpact, refreshMs: 20000 },
     maintenance: { render: renderMaintenance, refreshMs: null },
     settings: { render: renderSettings, refreshMs: null },
-    users: { render: renderUsers, refreshMs: null },
+    "allowed-emails": { render: renderAllowedEmails, refreshMs: null },
   };
 
   let currentSection = "dashboard";

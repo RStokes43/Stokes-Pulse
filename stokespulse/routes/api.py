@@ -13,47 +13,49 @@ def _device_map():
 
 @api_bp.route("/meta")
 def meta():
+    is_lan = auth.is_lan_client(request)
     return jsonify({
         "app_name": "Stokes-Pulse",
         "accent": "#a855f7",
         "version": version.get_version(),
         "groups_order": stats.GROUP_ORDER,
         "current_user": session.get("user"),
-        "role": auth.get_role(session.get("user")),
+        "role": auth.effective_role(session.get("user"), is_lan),
+        "is_lan": is_lan,
     })
 
 
-@api_bp.route("/users", methods=["GET", "POST"])
-def users_endpoint():
+@api_bp.route("/allowed-emails", methods=["GET", "POST"])
+def allowed_emails_endpoint():
     if request.method == "GET":
-        return jsonify({"users": auth.list_users(), "current_user": session.get("user")})
+        return jsonify({"emails": auth.list_allowed_emails(), "current_user": session.get("user")})
     body = request.get_json(force=True) or {}
     try:
-        auth.create_user(body.get("username", ""), body.get("password", ""), role=body.get("role", "user"))
+        auth.add_allowed_email(body.get("email", ""), role=body.get("role", "user"))
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
-    return jsonify({"users": auth.list_users()})
+    return jsonify({"emails": auth.list_allowed_emails()})
 
 
-@api_bp.route("/users/<username>", methods=["PATCH"])
-def update_user_role_endpoint(username):
+@api_bp.route("/allowed-emails/<email>", methods=["PATCH"])
+def update_allowed_email_role_endpoint(email):
     body = request.get_json(force=True) or {}
     try:
-        auth.set_role(username, body.get("role", ""))
+        auth.set_role(email, body.get("role", ""))
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
-    return jsonify({"users": auth.list_users()})
+    return jsonify({"emails": auth.list_allowed_emails()})
 
 
-@api_bp.route("/users/<username>", methods=["DELETE"])
-def delete_user_endpoint(username):
+@api_bp.route("/allowed-emails/<email>", methods=["DELETE"])
+def delete_allowed_email_endpoint(email):
     try:
-        auth.delete_user(username)
+        auth.remove_allowed_email(email)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
-    if session.get("user", "").lower() == (username or "").lower():
+    if (session.get("user") or "").lower() == (email or "").strip().lower():
         session.clear()
-    return jsonify({"users": auth.list_users()})
+    return jsonify({"emails": auth.list_allowed_emails()})
 
 
 @api_bp.route("/changelog")
@@ -145,6 +147,20 @@ def settings():
     saved = config.save_alerting(body)
     redacted = dict(saved)
     redacted["has_password"] = bool(redacted.pop("smtp_password", ""))
+    return jsonify(redacted)
+
+
+@api_bp.route("/settings/oauth", methods=["GET", "POST"])
+def oauth_settings():
+    if request.method == "GET":
+        cfg = config.load_oauth()
+        redacted = dict(cfg)
+        redacted["has_client_secret"] = bool(redacted.pop("client_secret", ""))
+        return jsonify(redacted)
+    body = request.get_json(force=True) or {}
+    saved = config.save_oauth(body)
+    redacted = dict(saved)
+    redacted["has_client_secret"] = bool(redacted.pop("client_secret", ""))
     return jsonify(redacted)
 
 

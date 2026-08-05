@@ -11,6 +11,7 @@ TARGETS_PATH = os.path.join(CONFIG_DIR, "targets.json")
 ALERTING_PATH = os.path.join(CONFIG_DIR, "alerting.json")
 MAINTENANCE_PATH = os.path.join(CONFIG_DIR, "maintenance.json")
 ALERT_OVERRIDES_PATH = os.path.join(CONFIG_DIR, "alert_overrides.json")
+OAUTH_PATH = os.path.join(CONFIG_DIR, "oauth.json")
 
 DEFAULT_ALERTING = {
     "smtp_host": "",
@@ -26,6 +27,7 @@ DEFAULT_ALERTING = {
 
 DEFAULT_MAINTENANCE = {"windows": []}
 DEFAULT_ALERT_OVERRIDES = {"mutes": {}}
+DEFAULT_OAUTH = {"client_id": "", "client_secret": ""}
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -114,6 +116,22 @@ def load_alert_overrides():
 def save_alert_overrides(data):
     _atomic_write_json(ALERT_OVERRIDES_PATH, data)
     return data
+
+
+def load_oauth():
+    return _read_json_with_default(OAUTH_PATH, DEFAULT_OAUTH)
+
+
+def save_oauth(new_data):
+    current = load_oauth()
+    # never let a blank/missing secret in a save request wipe out the stored one
+    if not new_data.get("client_secret"):
+        new_data = dict(new_data)
+        new_data["client_secret"] = current.get("client_secret", "")
+    merged = dict(current)
+    merged.update(new_data)
+    _atomic_write_json(OAUTH_PATH, merged)
+    return merged
 
 
 def is_muted(device_id):

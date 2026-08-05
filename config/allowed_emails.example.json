@@ -1,0 +1,4 @@
+{
+  "_comment": "Copy to config/allowed_emails.json (gitignored) or just manage via the Allowed Emails tab in the UI once you have one admin logged in. Anyone on the home LAN bypasses this entirely; this list only gates Google sign-in from outside the LAN.",
+  "emails": []
+}

@@ -1,0 +1,5 @@
+{
+  "_comment": "Copy to config/oauth.json (gitignored) or just configure via the Settings tab in the UI. Client ID/Secret come from a Google Cloud OAuth 2.0 Web application client with redirect URI https://pulse.stokescloud.net/auth/google/callback.",
+  "client_id": "",
+  "client_secret": ""
+}

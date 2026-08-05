@@ -10,15 +10,16 @@ from . import prober, port_drift
 APP_NAME = "Stokes-Pulse"
 ACCENT = "#a855f7"  # purple/violet
 
-# Endpoints reachable without a session (login/setup pages + their POSTs, and
-# Flask's own static file server so the login page can load CSS/JS).
-PUBLIC_ENDPOINTS = {"auth.login", "auth.setup", "auth.logout", "static"}
+# Endpoints reachable without a session (the Google sign-in page and the
+# OAuth callback/handoff routes that establish one, plus Flask's own static
+# file server so the login page can load CSS/JS).
+PUBLIC_ENDPOINTS = {"auth.login", "auth.google_callback", "auth.token_login", "auth.logout", "static"}
 
 MOBILE_UA_RE = re.compile(r"Android|iPhone|iPod|Windows Phone|BlackBerry", re.I)
 
-# API paths behind the Maintenance/Settings/Users tabs — regular users don't
-# get these even though they're logged in.
-ADMIN_ONLY_PATH_PREFIXES = ("/api/maintenance", "/api/settings", "/api/users")
+# API paths behind the Maintenance/Settings/Allowed Emails tabs — regular
+# users don't get these even though they're logged in.
+ADMIN_ONLY_PATH_PREFIXES = ("/api/maintenance", "/api/settings", "/api/allowed-emails")
 
 
 def create_app(start_background=True):
@@ -50,17 +51,28 @@ def create_app(start_background=True):
         ):
             return redirect(url_for("pages.mobile"))
 
+        # Anyone on the home LAN gets full, anonymous access — no session,
+        # no further checks. This must run before PUBLIC_ENDPOINTS/login so
+        # it applies uniformly to every route, matching "no auth required".
+        if auth.is_lan_client(request):
+            return None
+
         if request.endpoint in PUBLIC_ENDPOINTS:
             return None
-        if not auth.has_any_users():
-            if request.path.startswith("/api/"):
-                return jsonify({"error": "unauthorized"}), 401
-            return redirect(url_for("auth.setup", next=request.path))
-        if not session.get("user"):
+
+        session_user = session.get("user")
+        if session_user and auth.email_role(session_user) is None:
+            # Was logged in, but no longer on the allow-list (removed, or a
+            # stale pre-cutover session) — don't leave a half-broken zombie
+            # session sitting around until it expires on its own.
+            session.clear()
+            session_user = None
+
+        if not session_user:
             if request.path.startswith("/api/"):
                 return jsonify({"error": "unauthorized"}), 401
             return redirect(url_for("auth.login", next=request.path))
-        if request.path.startswith(ADMIN_ONLY_PATH_PREFIXES) and not auth.is_admin(session["user"]):
+        if request.path.startswith(ADMIN_ONLY_PATH_PREFIXES) and not auth.is_admin(session_user):
             return jsonify({"error": "admin access required"}), 403
         return None
 

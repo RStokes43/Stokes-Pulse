@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, render_template, session
+from flask import Blueprint, current_app, render_template, request, session
 
 from .. import auth
 
@@ -13,7 +13,7 @@ def index():
         "index.html",
         app_name=current_app.config["APP_NAME"],
         accent=current_app.config["ACCENT"],
-        is_admin=auth.is_admin(session.get("user")),
+        is_admin=auth.effective_is_admin(session.get("user"), auth.is_lan_client(request)),
     )
 
 
@@ -22,5 +22,5 @@ def mobile():
     return render_template(
         "mobile.html",
         app_name=current_app.config["APP_NAME"],
-        is_admin=auth.is_admin(session.get("user")),
+        is_admin=auth.effective_is_admin(session.get("user"), auth.is_lan_client(request)),
     )
