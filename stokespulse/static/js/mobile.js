@@ -801,7 +801,7 @@
   function closeModal(id) { qs(`#${id}`).hidden = true; }
 
   function wireEdgeSwipe() {
-    const EDGE_PCT = 0.1; // trigger zone scales with screen width instead of a fixed px value
+    const EDGE_PCT = 0.2; // trigger zone scales with screen width instead of a fixed px value
     const SWIPE_PX = 60;
     const MAX_VERTICAL_PX = 60;
     const MAX_MS = 600;
