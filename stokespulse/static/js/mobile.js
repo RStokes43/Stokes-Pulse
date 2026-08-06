@@ -801,7 +801,7 @@
   function closeModal(id) { qs(`#${id}`).hidden = true; }
 
   function wireEdgeSwipe() {
-    const EDGE_PX = 24;
+    const EDGE_PX = 40;
     const SWIPE_PX = 60;
     const MAX_VERTICAL_PX = 60;
     const MAX_MS = 600;
