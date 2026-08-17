@@ -198,7 +198,7 @@
   async function renderSidebar(container) {
     const [devicesData, eventsData] = await Promise.all([
       StokesPulse.fetchJSON("/api/devices"),
-      StokesPulse.fetchJSON("/api/events?limit=5"),
+      StokesPulse.fetchJSON("/api/events?limit=5&type=down"),
     ]);
 
     const latencyRows = devicesData.devices

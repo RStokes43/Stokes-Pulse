@@ -91,8 +91,9 @@ def analytics_series():
 @api_bp.route("/events")
 def events():
     limit = int(request.args.get("limit", 200))
+    event_type = request.args.get("type")
     dev_map = _device_map()
-    rows = db.get_events(limit=limit)
+    rows = db.get_events(limit=limit, event_type=event_type)
     for r in rows:
         dev = dev_map.get(r["device_id"])
         r["device_name"] = dev["name"] if dev else r["device_id"]

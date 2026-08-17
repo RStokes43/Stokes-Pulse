@@ -322,7 +322,7 @@
 
     const [devicesData, eventsData] = await Promise.all([
       fetchJSON("/api/devices"),
-      fetchJSON("/api/events?limit=5"),
+      fetchJSON("/api/events?limit=5&type=down"),
     ]);
     const latencyRows = devicesData.devices
       .map((d) => `<div class="latency-row">

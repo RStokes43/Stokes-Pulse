@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS device_state (
     device_id TEXT PRIMARY KEY,
     status TEXT NOT NULL DEFAULT 'up',
     consecutive_fail_cycles INTEGER NOT NULL DEFAULT 0,
-    open_event_id INTEGER
+    open_event_id INTEGER,
+    open_degraded_event_id INTEGER
 );
 """
 
@@ -62,6 +63,14 @@ def init_db():
     try:
         conn.executescript(SCHEMA)
         conn.commit()
+        # Lightweight migration for installs whose device_state table predates
+        # degraded-event tracking — CREATE TABLE IF NOT EXISTS above won't
+        # retrofit a column onto an already-existing table.
+        try:
+            conn.execute("ALTER TABLE device_state ADD COLUMN open_degraded_event_id INTEGER")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # column already exists
     finally:
         conn.close()
 
@@ -91,16 +100,18 @@ def get_device_state(device_id):
         conn.close()
 
 
-def upsert_device_state(device_id, status, consecutive_fail_cycles, open_event_id):
+def upsert_device_state(device_id, status, consecutive_fail_cycles, open_event_id, open_degraded_event_id=None):
     conn = get_conn()
     try:
         conn.execute(
-            "INSERT INTO device_state (device_id, status, consecutive_fail_cycles, open_event_id) "
-            "VALUES (?, ?, ?, ?) "
+            "INSERT INTO device_state "
+            "(device_id, status, consecutive_fail_cycles, open_event_id, open_degraded_event_id) "
+            "VALUES (?, ?, ?, ?, ?) "
             "ON CONFLICT(device_id) DO UPDATE SET status=excluded.status, "
             "consecutive_fail_cycles=excluded.consecutive_fail_cycles, "
-            "open_event_id=excluded.open_event_id",
-            (device_id, status, consecutive_fail_cycles, open_event_id),
+            "open_event_id=excluded.open_event_id, "
+            "open_degraded_event_id=excluded.open_degraded_event_id",
+            (device_id, status, consecutive_fail_cycles, open_event_id, open_degraded_event_id),
         )
         conn.commit()
     finally:
@@ -171,18 +182,20 @@ def set_event_alerted(event_id, alerted, details=None):
         conn.close()
 
 
-def get_events(limit=200, device_id=None):
+def get_events(limit=200, device_id=None, event_type=None):
     conn = get_conn()
     try:
+        query = "SELECT * FROM events WHERE 1=1"
+        params = []
         if device_id:
-            rows = conn.execute(
-                "SELECT * FROM events WHERE device_id = ? ORDER BY started_at DESC LIMIT ?",
-                (device_id, limit),
-            ).fetchall()
-        else:
-            rows = conn.execute(
-                "SELECT * FROM events ORDER BY started_at DESC LIMIT ?", (limit,)
-            ).fetchall()
+            query += " AND device_id = ?"
+            params.append(device_id)
+        if event_type:
+            query += " AND event_type = ?"
+            params.append(event_type)
+        query += " ORDER BY started_at DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(query, params).fetchall()
         return [dict(r) for r in rows]
     finally:
         conn.close()

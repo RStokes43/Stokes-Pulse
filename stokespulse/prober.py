@@ -116,7 +116,8 @@ def run_cycle():
             print(f"[prober] error probing {device['id']}: {exc}")
 
         state = db.get_device_state(device["id"]) or {
-            "status": "up", "consecutive_fail_cycles": 0, "open_event_id": None
+            "status": "up", "consecutive_fail_cycles": 0,
+            "open_event_id": None, "open_degraded_event_id": None,
         }
 
         if result["status"] == "fail":
@@ -126,21 +127,35 @@ def run_cycle():
             fail_cycles = 0
             new_status = result["status"]
 
-        was_down = state["status"] == "down"
-        now_down = new_status == "down"
+        prev_status = state["status"]
         open_event_id = state["open_event_id"]
+        open_degraded_event_id = state.get("open_degraded_event_id")
 
-        if now_down and not was_down:
+        if new_status == "down" and prev_status != "down":
             open_event_id = db.open_event(device["id"], "down", "pending",
                                            details=f"{device['name']} unreachable")
             newly_down.append((device, open_event_id))
-        elif was_down and not now_down:
+        elif prev_status == "down" and new_status != "down":
             if open_event_id:
                 newly_recovered.append((device, open_event_id))
                 db.close_event(open_event_id, details="recovered")
             open_event_id = None
 
-        db.upsert_device_state(device["id"], new_status, fail_cycles, open_event_id)
+        # Degraded transitions are logged (Event Log) but never emailed —
+        # they're common enough (a single closed port, a slow ping) that
+        # alerting on every one would be noise; "down" alerting above is
+        # unaffected by this.
+        if new_status == "degraded" and prev_status != "degraded":
+            open_degraded_event_id = db.open_event(
+                device["id"], "degraded", "logged", details=f"{device['name']} degraded"
+            )
+        elif prev_status == "degraded" and new_status != "degraded":
+            if open_degraded_event_id:
+                details = "escalated to down" if new_status == "down" else "recovered"
+                db.close_event(open_degraded_event_id, details=details)
+            open_degraded_event_id = None
+
+        db.upsert_device_state(device["id"], new_status, fail_cycles, open_event_id, open_degraded_event_id)
         db.record_probe(device["id"], new_status, result["latency_ms"],
                          result["ports_open"], result["ports_closed"])
 
