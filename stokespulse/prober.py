@@ -8,9 +8,9 @@ import time
 from . import db, config
 
 CYCLE_SECONDS = 3
-# Debounce is defined in wall-clock time (~90s), not a fixed cycle count, so
-# it stays meaningful as CYCLE_SECONDS changes: 90 / 3 = 30 consecutive cycles.
-DOWN_AFTER_CYCLES = round(90 / CYCLE_SECONDS)
+# Debounce is defined in wall-clock time (~15s), not a fixed cycle count, so
+# it stays meaningful as CYCLE_SECONDS changes: 15 / 3 = 5 consecutive cycles.
+DOWN_AFTER_CYCLES = round(15 / CYCLE_SECONDS)
 # Tightened from 1.5s/2.0s: at a 3s cycle budget, a single unreachable device
 # with several ports could otherwise cost 1.5 + N*2.0s all by itself — more
 # than the entire cycle. LAN RTT is ~1ms and even WAN/VPN checks here see
