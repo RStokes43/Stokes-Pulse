@@ -58,8 +58,6 @@
     }
     .m-drawer-backdrop.open { opacity: 1; pointer-events: auto; }
     .m-drawer {
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
       width: min(280px, 80vw);
       background: var(--bg-elev);
       border-right: 1px solid var(--border);
@@ -68,10 +66,21 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      transform: translateX(-100%);
-      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    .m-drawer.open { transform: translateX(0); }
+    /* Overlay positioning only applies below the side-by-side breakpoint —
+       scoping it here (rather than setting it unconditionally and trying to
+       override it back to "none" in the wide media query below) sidesteps
+       an equal-specificity cascade fight over transform between the two
+       @media blocks. */
+    @media (max-width: 699px) {
+      .m-drawer {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        transform: translateX(-100%);
+        transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .m-drawer.open { transform: translateX(0); }
+    }
     .m-drawer-brand { font-weight: 700; font-size: 16px; padding: 4px 10px 16px; }
     .m-drawer-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); padding: 14px 10px 6px; }
     .m-drawer-item {
@@ -165,6 +174,24 @@
       to { opacity: 1; transform: translateY(0); }
     }
     .m-content.m-fade-in { animation: m-fade-in 0.25s ease; }
+
+    /* Wide viewports (unfolded foldables, tablets, landscape phones) get a
+       persistent side-by-side layout instead of an overlay drawer — the nav
+       becomes a docked sidebar next to the content, no hamburger/backdrop. */
+    @media (min-width: 700px) {
+      body {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+        grid-template-rows: auto 1fr;
+        grid-template-areas: "sidebar header" "sidebar content";
+        min-height: 100vh;
+      }
+      .m-header { grid-area: header; }
+      .m-content { grid-area: content; }
+      .m-drawer { grid-area: sidebar; }
+      .m-drawer-backdrop { display: none; }
+      #drawer-btn { display: none; }
+    }
   </style>
 </head>
 <body>
