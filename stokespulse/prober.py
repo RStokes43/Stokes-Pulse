@@ -8,9 +8,14 @@ import time
 from . import db, config
 
 CYCLE_SECONDS = 3
-# Debounce is defined in wall-clock time (~15s), not a fixed cycle count, so
-# it stays meaningful as CYCLE_SECONDS changes: 15 / 3 = 5 consecutive cycles.
-DOWN_AFTER_CYCLES = round(15 / CYCLE_SECONDS)
+# Debounce is defined in wall-clock time (~30s), not a fixed cycle count, so
+# it stays meaningful as CYCLE_SECONDS changes: 30 / 3 = 10 consecutive cycles.
+DOWN_AFTER_CYCLES = round(30 / CYCLE_SECONDS)
+# Same idea, but for "degraded" logging: a single closed port or slow ping
+# flips the *displayed* status to degraded immediately (unchanged), but we
+# only write an Event Log entry if it's still degraded 30s later — avoids
+# logging (and emailing digests that reference) every brief blip.
+DEGRADED_LOG_AFTER_CYCLES = round(30 / CYCLE_SECONDS)
 # Tightened from 1.5s/2.0s: at a 3s cycle budget, a single unreachable device
 # with several ports could otherwise cost 1.5 + N*2.0s all by itself — more
 # than the entire cycle. LAN RTT is ~1ms and even WAN/VPN checks here see
@@ -116,7 +121,7 @@ def run_cycle():
             print(f"[prober] error probing {device['id']}: {exc}")
 
         state = db.get_device_state(device["id"]) or {
-            "status": "up", "consecutive_fail_cycles": 0,
+            "status": "up", "consecutive_fail_cycles": 0, "consecutive_degraded_cycles": 0,
             "open_event_id": None, "open_degraded_event_id": None,
         }
 
@@ -126,6 +131,8 @@ def run_cycle():
         else:
             fail_cycles = 0
             new_status = result["status"]
+
+        degraded_cycles = state.get("consecutive_degraded_cycles", 0) + 1 if new_status == "degraded" else 0
 
         prev_status = state["status"]
         open_event_id = state["open_event_id"]
@@ -144,8 +151,10 @@ def run_cycle():
         # Degraded transitions are logged (Event Log) but never emailed —
         # they're common enough (a single closed port, a slow ping) that
         # alerting on every one would be noise; "down" alerting above is
-        # unaffected by this.
-        if new_status == "degraded" and prev_status != "degraded":
+        # unaffected by this. Only write the entry once it's been degraded
+        # for DEGRADED_LOG_AFTER_CYCLES straight — a blip that clears before
+        # that never gets logged at all.
+        if new_status == "degraded" and degraded_cycles == DEGRADED_LOG_AFTER_CYCLES and not open_degraded_event_id:
             open_degraded_event_id = db.open_event(
                 device["id"], "degraded", "logged", details=f"{device['name']} degraded"
             )
@@ -155,7 +164,9 @@ def run_cycle():
                 db.close_event(open_degraded_event_id, details=details)
             open_degraded_event_id = None
 
-        db.upsert_device_state(device["id"], new_status, fail_cycles, open_event_id, open_degraded_event_id)
+        db.upsert_device_state(
+            device["id"], new_status, fail_cycles, open_event_id, open_degraded_event_id, degraded_cycles
+        )
         db.record_probe(device["id"], new_status, result["latency_ms"],
                          result["ports_open"], result["ports_closed"])
 

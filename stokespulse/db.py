@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS device_state (
     device_id TEXT PRIMARY KEY,
     status TEXT NOT NULL DEFAULT 'up',
     consecutive_fail_cycles INTEGER NOT NULL DEFAULT 0,
+    consecutive_degraded_cycles INTEGER NOT NULL DEFAULT 0,
     open_event_id INTEGER,
     open_degraded_event_id INTEGER
 );
@@ -66,11 +67,15 @@ def init_db():
         # Lightweight migration for installs whose device_state table predates
         # degraded-event tracking — CREATE TABLE IF NOT EXISTS above won't
         # retrofit a column onto an already-existing table.
-        try:
-            conn.execute("ALTER TABLE device_state ADD COLUMN open_degraded_event_id INTEGER")
-            conn.commit()
-        except sqlite3.OperationalError:
-            pass  # column already exists
+        for stmt in (
+            "ALTER TABLE device_state ADD COLUMN open_degraded_event_id INTEGER",
+            "ALTER TABLE device_state ADD COLUMN consecutive_degraded_cycles INTEGER NOT NULL DEFAULT 0",
+        ):
+            try:
+                conn.execute(stmt)
+                conn.commit()
+            except sqlite3.OperationalError:
+                pass  # column already exists
     finally:
         conn.close()
 
@@ -100,18 +105,22 @@ def get_device_state(device_id):
         conn.close()
 
 
-def upsert_device_state(device_id, status, consecutive_fail_cycles, open_event_id, open_degraded_event_id=None):
+def upsert_device_state(device_id, status, consecutive_fail_cycles, open_event_id,
+                         open_degraded_event_id=None, consecutive_degraded_cycles=0):
     conn = get_conn()
     try:
         conn.execute(
             "INSERT INTO device_state "
-            "(device_id, status, consecutive_fail_cycles, open_event_id, open_degraded_event_id) "
-            "VALUES (?, ?, ?, ?, ?) "
+            "(device_id, status, consecutive_fail_cycles, open_event_id, "
+            "open_degraded_event_id, consecutive_degraded_cycles) "
+            "VALUES (?, ?, ?, ?, ?, ?) "
             "ON CONFLICT(device_id) DO UPDATE SET status=excluded.status, "
             "consecutive_fail_cycles=excluded.consecutive_fail_cycles, "
             "open_event_id=excluded.open_event_id, "
-            "open_degraded_event_id=excluded.open_degraded_event_id",
-            (device_id, status, consecutive_fail_cycles, open_event_id, open_degraded_event_id),
+            "open_degraded_event_id=excluded.open_degraded_event_id, "
+            "consecutive_degraded_cycles=excluded.consecutive_degraded_cycles",
+            (device_id, status, consecutive_fail_cycles, open_event_id,
+             open_degraded_event_id, consecutive_degraded_cycles),
         )
         conn.commit()
     finally:
