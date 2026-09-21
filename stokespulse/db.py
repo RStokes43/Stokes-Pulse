@@ -191,7 +191,7 @@ def set_event_alerted(event_id, alerted, details=None):
         conn.close()
 
 
-def get_events(limit=200, device_id=None, event_type=None):
+def get_events(limit=200, device_id=None, event_type=None, since_ts=None, until_ts=None):
     conn = get_conn()
     try:
         query = "SELECT * FROM events WHERE 1=1"
@@ -202,6 +202,12 @@ def get_events(limit=200, device_id=None, event_type=None):
         if event_type:
             query += " AND event_type = ?"
             params.append(event_type)
+        if since_ts is not None:
+            query += " AND started_at >= ?"
+            params.append(since_ts)
+        if until_ts is not None:
+            query += " AND started_at <= ?"
+            params.append(until_ts)
         query += " ORDER BY started_at DESC LIMIT ?"
         params.append(limit)
         rows = conn.execute(query, params).fetchall()

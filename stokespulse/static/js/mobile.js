@@ -137,13 +137,80 @@
   }
 
   // ---------- Events ----------
+  let eventsDeviceId = "", eventsSince = "", eventsUntil = "";
+
+  function dateInputToUnix(value, endOfDay) {
+    if (!value) return null;
+    const d = new Date(`${value}T${endOfDay ? "23:59:59" : "00:00:00"}`);
+    return Math.floor(d.getTime() / 1000);
+  }
+
   async function renderEvents(root) {
-    const data = await fetchJSON("/api/events?limit=50");
+    // #m-content is shared by every section, so on a fresh switch into
+    // Events these controls won't exist yet; on a periodic refresh of this
+    // same section they still will — that's the rebuild-vs-update signal.
+    if (!qs("#m-events-device", root)) {
+      root.innerHTML = `
+        <div class="panel">
+          <div class="form-row"><label>Device</label>
+            <select id="m-events-device"><option value="">All devices</option></select>
+          </div>
+          <div class="form-row"><label>From</label><input type="date" id="m-events-since"></div>
+          <div class="form-row"><label>To</label><input type="date" id="m-events-until"></div>
+          <button class="btn secondary" type="button" id="m-events-clear" style="width:100%;margin-top:4px">Clear filters</button>
+        </div>
+        <div id="m-events-list"></div>`;
+      qs("#m-events-device", root).value = eventsDeviceId;
+      qs("#m-events-since", root).value = eventsSince;
+      qs("#m-events-until", root).value = eventsUntil;
+      qs("#m-events-device", root).addEventListener("change", (e) => {
+        eventsDeviceId = e.target.value;
+        loadMobileEvents(root);
+      });
+      qs("#m-events-since", root).addEventListener("change", (e) => {
+        eventsSince = e.target.value;
+        loadMobileEvents(root);
+      });
+      qs("#m-events-until", root).addEventListener("change", (e) => {
+        eventsUntil = e.target.value;
+        loadMobileEvents(root);
+      });
+      qs("#m-events-clear", root).addEventListener("click", () => {
+        eventsDeviceId = eventsSince = eventsUntil = "";
+        qs("#m-events-device", root).value = "";
+        qs("#m-events-since", root).value = "";
+        qs("#m-events-until", root).value = "";
+        loadMobileEvents(root);
+      });
+    }
+    await loadMobileEvents(root);
+  }
+
+  async function loadMobileEvents(root) {
+    const sel = qs("#m-events-device", root);
+    if (sel.options.length <= 1) {
+      const devData = await fetchJSON("/api/devices");
+      sel.insertAdjacentHTML(
+        "beforeend",
+        devData.devices.map((d) => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join("")
+      );
+      sel.value = eventsDeviceId;
+    }
+
+    const params = new URLSearchParams({ limit: "50" });
+    if (eventsDeviceId) params.set("device", eventsDeviceId);
+    const sinceTs = dateInputToUnix(eventsSince, false);
+    const untilTs = dateInputToUnix(eventsUntil, true);
+    if (sinceTs != null) params.set("since", sinceTs);
+    if (untilTs != null) params.set("until", untilTs);
+
+    const data = await fetchJSON(`/api/events?${params.toString()}`);
+    const listEl = qs("#m-events-list", root);
     if (!data.events.length) {
-      root.innerHTML = '<div class="m-empty">No events yet.</div>';
+      listEl.innerHTML = '<div class="m-empty">No events match these filters.</div>';
       return;
     }
-    root.innerHTML = data.events
+    listEl.innerHTML = data.events
       .map((e) => {
         const when = new Date(e.started_at * 1000).toLocaleString([], {
           month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",

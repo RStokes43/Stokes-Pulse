@@ -92,8 +92,13 @@ def analytics_series():
 def events():
     limit = int(request.args.get("limit", 200))
     event_type = request.args.get("type")
+    device_id = request.args.get("device")
+    since_ts = request.args.get("since", type=int)
+    until_ts = request.args.get("until", type=int)
     dev_map = _device_map()
-    rows = db.get_events(limit=limit, event_type=event_type)
+    rows = db.get_events(
+        limit=limit, device_id=device_id, event_type=event_type, since_ts=since_ts, until_ts=until_ts
+    )
     for r in rows:
         dev = dev_map.get(r["device_id"])
         r["device_name"] = dev["name"] if dev else r["device_id"]
